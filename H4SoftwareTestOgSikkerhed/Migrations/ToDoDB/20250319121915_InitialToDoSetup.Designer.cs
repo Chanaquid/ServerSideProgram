@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace H4SoftwareTestOgSikkerhed.Migrations.ToDoDB
 {
     [DbContext(typeof(ToDoDBContext))]
-    [Migration("20250319112145_InitialToDoSetup")]
+    [Migration("20250319121915_InitialToDoSetup")]
     partial class InitialToDoSetup
     {
         /// <inheritdoc />

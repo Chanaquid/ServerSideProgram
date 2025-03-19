@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "H4SoftwareTestOgSikkerhed", "H4SoftwareTestOgSikkerhed\H4SoftwareTestOgSikkerhed.csproj", "{47032121-1320-46DB-925C-9C5504DC92EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "H4SoftwareTestOgSikkerhedProject", "H4SoftwareTestOgSikkerhedProject\H4SoftwareTestOgSikkerhedProject.csproj", "{FA08A1B2-9FB5-4897-8C3D-1FB47AC360CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "H4SoftwareTestOgSikkerhedProject\Test.csproj", "{FA08A1B2-9FB5-4897-8C3D-1FB47AC360CF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "H4SoftwareTestOgSikkerhedCrypteringsAPI", "H4SoftwareTestOgSikkerhedCrypteringsAPI\H4SoftwareTestOgSikkerhedCrypteringsAPI.csproj", "{DF4DE498-D4CD-483F-8396-E72344F176B3}"
 EndProject

@@ -61,13 +61,8 @@ public class AsymetricEncryptionService
 
     public async Task<string> EncryptAsymetricAsync(string data)
     {
-        string[] buffer = [data, PublicKey];
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(buffer);
-        StringContent payload = new(json, Encoding.UTF8, "application/json");
-
-        using HttpClient httpClient = new();
-        HttpResponseMessage response = await httpClient.PostAsync(apiUrl, payload);
-        return response.Content.ReadAsStringAsync().Result;
+        // Just use the local Encrypt method instead of making an API call
+        return Encrypt(data);
     }
 
     // store my keys
