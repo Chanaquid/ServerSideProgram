@@ -1,0 +1,120 @@
+﻿@page "/"
+@using H4SoftwareTestOgSikkerhed.Components.Interfaces
+@using H4SoftwareTestOgSikkerhed.Components.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using H4SoftwareTestOgSikkerhed.Data
+@using H4SoftwareTestOgSikkerhed.Models
+@using System.Text
+
+@attribute [Authorize(Policy = "RequireAuthentication")]
+
+@inject AuthenticationStateProvider _authenticationStateProvider;
+@inject IServiceProvider _serviceProvider;
+@inject ToDoDBContext _dbContext;
+@inject NavigationManager NavigationManager;
+@inject IHashingHelper _HashingHelper;
+
+<PageTitle>Home</PageTitle>
+
+<div class="container text-center mt-5">
+    <h2 class="mb-4">Validate CRP. NR.</h2>
+    <div class="form-group row justify-content-center align-items-center">
+        <label for="StaticEmail" class="col-sm-2 col-form-label text-right">User:</label>
+        <div class="col-sm-4">
+            <input type="text" readonly class="form-control-plaintext" id="StaticEmail" value="@UserEmail">
+        </div>
+    </div>
+    <div class="form-group row justify-content-center align-items-center">
+        <label for="inputCPR" class="col-sm-2 col-form-label text-right">Specify your cpr.nr:</label>
+        <div class="col-sm-4">
+            <input @bind="CprNumber" type="text" class="form-control" id="inputCPR" placeholder="Enter CPR">
+        </div>
+    </div>
+    <button class="btn btn-primary mt-3" @onclick="OnSubmit">Submit</button>
+
+    @if (!string.IsNullOrEmpty(ValidationMessage))
+    {
+        <div class="alert alert-info mt-3">@ValidationMessage</div>
+    }
+</div>
+
+@code {
+    public string UserEmail;
+    private string CprNumber;
+    private string HashedCprNumber;
+    private string ValidationMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+            UserEmail = user.Identity.Name;
+
+        // test af forskellige hashing metoder
+
+        // byte[] bytes = Encoding.UTF8.GetBytes("inputString");
+        // byte[] newBytes = _HashingHelper.HashPBKDF2(bytes);
+
+        string myString = "Hello World!";
+        string hashedCprNumber = _HashingHelper.HashSHA2(myString);
+        // string myNewString = _HashingHelper.HashPBKDF2(myString);
+
+    }
+
+    private async Task OnSubmit()
+    {
+        if (string.IsNullOrEmpty(CprNumber))
+        {
+            ValidationMessage = "Please enter a valid CPR number.";
+            return;
+        }
+
+        // Check if CPR exists for the authenticated user
+        var existingCprOnUser = _dbContext.Cprs.FirstOrDefault(c => c.User == UserEmail);
+
+        if (existingCprOnUser == null)
+        {
+            // User doesn't have a CPR number, create a new hashed CPR
+            // string hashedCprNumber = _HashingHelper.HashBcrypt(CprNumber);
+            string hashedCprNumber = _HashingHelper.HashSHA2(CprNumber);
+            // string hashedCprNumber = _HashingHelper.HashPBKDF2(CprNumber);
+            // string hashedCprNumber = _HashingHelper.HashHMAC(CprNumber);
+
+            // Add the new hashed CPR number to the database
+            var newCpr = new Cpr
+                {
+                    User = UserEmail,
+                    CprNumber = hashedCprNumber
+                };
+
+            _dbContext.Cprs.Add(newCpr);
+            await _dbContext.SaveChangesAsync();
+
+            ValidationMessage = "CPR number saved successfully.";
+        }
+        else
+        {
+            // If CPR exists, validate it
+            // bool isCprMatch = _HashingHelper.VerifyBcrypt(CprNumber, existingCprOnUser.CprNumber);
+            bool isCprMatch = _HashingHelper.HashSHA2(CprNumber) == existingCprOnUser.CprNumber;
+            // bool isCprMatch = _HashingHelper.HashPBKDF2(CprNumber) == existingCprOnUser.CprNumber;
+            // bool isCprMatch = _HashingHelper.HashHMAC(CprNumber) == existingCprOnUser.CprNumber;
+
+
+
+            if (isCprMatch)
+            {
+                // Navigate to the next page if CPR matches
+                NavigationManager.NavigateTo("/todolist");
+            }
+            else
+            {
+                // CPR doesn't match
+                ValidationMessage = "Wrong CPR number. Try Again.";
+            }
+        }
+    }
+}
