@@ -86,11 +86,10 @@
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    public async Task RegisterUser(EditContext editContext)
+    private async Task RegisterUser(EditContext editContext)
     {
         // Create a new user instance
         var user = CreateUser();
-        user.TwoFactorEnabled = true; // Enable two-factor authentication (if desired)
 
         // Set the username and email for the new user
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -106,32 +105,18 @@
             return;
         }
 
-        Logger.LogInformation("User created a new account with password.");
-
-        // Generate the email confirmation token
-        var userId = await UserManager.GetUserIdAsync(user);
+        // Automatically confirm the email
         var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        await UserManager.ConfirmEmailAsync(user, code);
 
-        // Prepare the confirmation callback URL
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("/Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-
-        // Send the confirmation email using the custom EmailSender
-        await EmailSender.SendEmailConfirmationAsync(user, callbackUrl);
-
-        // If confirmation is required, redirect to the confirmation page
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
-        {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
-        }
+        // Log the user creation
+        Logger.LogInformation("User created a new account with password and auto-confirmed email.");
 
         // Sign in the user and redirect
         await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl);
+        // Instead of just redirecting to login
+        RedirectManager.RedirectTo($"Account/Login?message=Your+email+has+been+confirmed+successfully");
+        //RedirectManager.RedirectTo("Account/Login"); // Simple redirect without status
     }
 
     private ApplicationUser CreateUser()

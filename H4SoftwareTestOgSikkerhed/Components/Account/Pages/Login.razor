@@ -16,6 +16,12 @@
     <div class="login-box">
         <h1 class="text-center">Log in To TODO-List</h1>
         <section>
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div class="alert alert-success">
+                    @message
+                </div>
+            }
             <StatusMessage Message="@errorMessage" />
             <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
                 <DataAnnotationsValidator />
@@ -100,6 +106,9 @@
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? message { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
