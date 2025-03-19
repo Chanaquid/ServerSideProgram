@@ -1,6 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Identity
+@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
-
+@inject UserManager<H4SoftwareTestOgSikkerhed.Data.ApplicationUser> UserManager
 @inject AuthenticationStateProvider _authenticationStateProvider;
 
 <div class="page" style="@(isAuthenticated ? "" : "width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #f8f9fa;")">
@@ -14,12 +15,17 @@
         <main>
             <div class="top-row px-4">
                 <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-                @if (isAdmin)
-                {
-                    <a href="/addrole">Add Role</a>
-                }
                 <span class="user-email">
-                    <a href="/Account/Manage">@userEmail</a>
+                    <a href="/Account/Manage">
+                        @if (isAdmin)
+                        {
+                            @($"{userEmail}(Admin)")
+                        }
+                        else
+                        {
+                            @userEmail
+                        }
+                    </a>
                 </span>
 
                 <form action="Account/Logout" method="post">
@@ -54,6 +60,7 @@
     private bool isAuthenticated;
     private string? userEmail;
     private string? currentUrl;
+    private string roleDebug = "";
 
     protected override void OnInitialized()
     {
@@ -76,12 +83,32 @@
     {
         var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
+        // Check for Admin role in claims
         isAdmin = user.IsInRole("Admin");
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
 
         if (isAuthenticated)
         {
             userEmail = user.Identity?.Name ?? "User"; // Default to "User" if Name is null
+
+            // Direct database check for role if user is authenticated
+            if (userEmail != null)
+            {
+                var appUser = await UserManager.FindByEmailAsync(userEmail);
+                if (appUser != null)
+                {
+                    // This performs a direct database check for the role
+                    isAdmin = await UserManager.IsInRoleAsync(appUser, "Admin");
+                }
+            }
+
+            // Log all roles for debugging
+            foreach (var claim in user.Claims.Where(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"))
+            {
+                roleDebug += $"Role: {claim.Value}; ";
+                Console.WriteLine($"User has role: {claim.Value}");
+            }
         }
     }
 }
